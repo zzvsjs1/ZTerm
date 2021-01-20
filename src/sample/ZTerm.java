@@ -7,26 +7,26 @@ import java.util.Optional;
 import javafx.scene.control.*;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.effect.Light;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.InputEvent;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 
-public class ZTerm extends Application {
+public class ZTerm extends Stage {
     private static final long serialVersionUID = 1L;
-    private int width;
-    private int height;
+    private double width;
+    private double height;
+    private Stage mainStage;
     private Scene mainScene;
-    private ScrollPane drawingPane;
+    private GridPane drawingPane;
     private Font ztFont;
     private double ztFontSize;
     private String ztFontName;
@@ -38,46 +38,39 @@ public class ZTerm extends Application {
     private int maxHeight;
     private String key = "";
     private String tab;
-    private ArrayList<TextField> ztTextComponents = new ArrayList<>();
+    private ArrayList<TextField> ztTextField = new ArrayList<>();
+    private ArrayList<TextArea> ztTextArea = new ArrayList<>();
     private ArrayList<TableView> ztTables = new ArrayList<>();
     private int lastComponentOrder = -2147483648;
     private Color lastChosenColor = null;
-
-    private KeyEvent ztKeyEvent;
 
 
     public void showHelp() {
 
     }
 
-    public ZTerm() {
-        this.height = 500;
-        this.width = 500;
+
+    public ZTerm(double width, double height) {
+        this.x = 0;
+        this.y = 0;
+        this.height = height;
+        this.width = width;
         this.ztFontName = "Arial";
         this.ztFontSize = 15.0;
         this.ztFont = new Font(this.ztFontName, this.ztFontSize);
-
+        this.setTabSize(4);
+        this.setHeight(height);
+        this.setWidth(width);
     }
-
-    @Override
-    public void start(Stage primaryStage) {
-        this.drawingPane = new ScrollPane();
-        this.drawingPane.setBackground(Background.EMPTY);
-        this.mainScene = new Scene(drawingPane, this.height, this.width);
-        primaryStage.setTitle("Hello");
-        primaryStage.setScene(mainScene);
-        primaryStage.setHeight(this.height);
-        primaryStage.setWidth(this.width);
-        primaryStage.show();
-    }
-
 
     public String getPasswordFromDialog(String message){
         return "";
     }
 
 
-    public int addRowToTable(int indexOfTable, String rowData) {return 0;}
+    public void addRowToTable(int indexOfTable, String rowData) {
+
+    }
 
 
     public Color getColorFromDialog(String message){
@@ -85,8 +78,14 @@ public class ZTerm extends Application {
     }
 
 
-    public int addTable(int width, int height, String columnNames){
-        return 0;
+    public void addTable(int width, int height, String columnNames){
+        TableView<String> ztTable;
+
+        if (columnNames == null) {
+            ztTable = new TableView<>();
+            this.ztTables.add(ztTable);
+
+        }
     }
 
 
@@ -98,23 +97,18 @@ public class ZTerm extends Application {
         boolean changed = false;
         Button bt = new Button(buttonText);
 
-        bt.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent ae) {
-                try {
-                    handlingObject.getClass().getMethod(handlingMethodName, (Class[])null).invoke(handlingObject, (Object[])null);
-                } catch (Exception var3){
-                    System.err.println(var3.getCause() + " occurred when invoking " + handlingMethodName + " method in the object '" + handlingObject + "' (" + handlingObject.getClass() + ").");
-                }
+        bt.setOnAction((ActionEvent e) -> {
+            try {
+                handlingObject.getClass().getMethod(handlingMethodName, (Class[])null).invoke(handlingObject, (Object[])null);
+            } catch (Exception var3){
+                System.err.println(var3.getCause() + " occurred when invoking " + handlingMethodName + " method in the object '" + handlingObject + "' (" + handlingObject.getClass() + ").");
             }
         });
+
         bt.setFont(this.ztFont);
-        this.drawingPane.setContent(bt);
-        double buttonHeight = bt.getPrefHeight();
-        double buttonWidth = bt.getPrefWidth();
-
-        double thisWidth = this.x + buttonWidth + 2;
-
+        this.x += bt.getWidth();
+        this.y += bt.getHeight();
+        this.drawingPane.add(bt, this.x, this.y);
     }
 
     public void setFontColor(Color fontColor) {
@@ -150,14 +144,30 @@ public class ZTerm extends Application {
         if (message == null)
             message = "null";
 
-        message = message.replaceAll("\\t", this.tab);
-        String[] lines = message.split("\n");
+        //message = message.replaceAll("\\t", this.tab);
+        //String[] lines = message.split("\n");
 
-        if (lines.length > 1){
+        Label newLabel = new Label(message);
+        newLabel.prefHeight(-1);
+        newLabel.prefWidth(-1);
+        System.out.println(newLabel.getWidth());
 
+        if (true){
+            this.x += newLabel.getWidth();
+            this.y += newLabel.getHeight();
+            drawingPane.add(new Label(message), this.x , this.y);
         } else {
 
         }
+    }
+
+
+    public void setXY(int x, int y) {
+        this.iLeft = x;
+        this.iTop = y;
+        this.x = x;
+        this.y = y;
+        this.maxHeight = 0;
     }
 
 
@@ -187,6 +197,7 @@ public class ZTerm extends Application {
         error.showAndWait();
     }
 
+
     public void showWarningDialog(String message) {
         if (message == null)
             message = "null";
@@ -197,6 +208,23 @@ public class ZTerm extends Application {
         error.setContentText(message);
         error.showAndWait();
     }
+
+
+    public boolean showConfirmationDialog(String message) {
+        if (message == null)
+            message = "null";
+
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmation Dialog");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        return result.get() == ButtonType.OK;
+    }
+
 
     public String getInputString(String message) {
         TextInputDialog inputDialog = new TextInputDialog();
@@ -209,6 +237,7 @@ public class ZTerm extends Application {
         return input.orElse("null");
     }
 
+
     public String getFilePath() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Choose a file");
@@ -219,6 +248,7 @@ public class ZTerm extends Application {
 
         return file == null ? "null" : file.getAbsolutePath();
     }
+
 
     public String setFilePath() {
         FileChooser chooser = new FileChooser();
@@ -231,7 +261,8 @@ public class ZTerm extends Application {
         return file == null ? "null" : file.getAbsolutePath();
     }
 
-    public  void  addImageIcon(String imageFilename) {
+
+    public void addImageIcon(String imageFilename) {
         File file = new File(imageFilename);
         Image i = new Image(file.toURI().toString());
 
@@ -246,17 +277,15 @@ public class ZTerm extends Application {
             if (i.getWidth() > this.width)
                 iv.fitWidthProperty().setValue(i.getWidth() / 2);
 
-            this.drawingPane.setContent(iv);
-            this.drawingPane.setFitToHeight(true);
+            this.x += iv.getFitWidth();
+            this.y += iv.getFitHeight();
+            this.drawingPane.add(iv, this.x, this.y);
         }
     }
 
-    public double getMouseX() {
-        return 0;
+
+    public void getMouseX() {
+
     }
 
-
-    public static void main(String[] args) {
-        launch(args);
-    }
 }
