@@ -1,30 +1,37 @@
 package sample;
 
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import javafx.scene.control.*;
-import javafx.application.Application;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
 import javafx.event.ActionEvent;
+import javafx.util.Pair;
 
-public class ZTerm extends Stage {
+import javax.swing.*;
+import javax.swing.text.JTextComponent;
+
+
+public class ZTerm extends Stage{
     private static final long serialVersionUID = 1L;
     private double width;
     private double height;
-    private Stage mainStage;
     private Scene mainScene;
     private GridPane drawingPane;
     private Font ztFont;
@@ -35,6 +42,8 @@ public class ZTerm extends Stage {
     private int iTop;
     private int x;
     private int y;
+    private double mouseX;
+    private double mouseY;
     private int maxHeight;
     private String key = "";
     private String tab;
@@ -58,13 +67,47 @@ public class ZTerm extends Stage {
         this.ztFontName = "Arial";
         this.ztFontSize = 15.0;
         this.ztFont = new Font(this.ztFontName, this.ztFontSize);
+        this.drawingPane = new GridPane();
+        this.drawingPane.setVgap(5);
+        this.drawingPane.setHgap(5);
+        this.mainScene = new Scene(this.drawingPane);
+        this.setScene(this.mainScene);
         this.setTabSize(4);
         this.setHeight(height);
         this.setWidth(width);
+
+        this.show();
     }
 
+
+    //???
     public String getPasswordFromDialog(String message){
-        return "";
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("PasswordField");
+        dialog.setHeaderText(null);
+
+        ButtonType loginButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        PasswordField password = new PasswordField();
+        password.setPromptText("Password");
+
+        grid.add(new Label("Password:"), 0, 0);
+        grid.add(password, 1, 0);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<String> result = dialog.showAndWait();
+
+        if(result.isEmpty())
+            result = Optional.of("null");
+
+        return result.get();
     }
 
 
@@ -106,17 +149,16 @@ public class ZTerm extends Stage {
         });
 
         bt.setFont(this.ztFont);
+        this.drawingPane.add(bt, this.x, this.y);
         this.x += bt.getWidth();
         this.y += bt.getHeight();
-        this.drawingPane.add(bt, this.x, this.y);
+
+        bt.setTranslateX(this.x);
+        bt.setTranslateY(this.y);
+
+        this.drawingPane.getHeight();
     }
 
-    public void setFontColor(Color fontColor) {
-        this.ztFontColor = fontColor;
-    }
-
-    public void setBackgroundColor(Color backgroundColor) {
-    }
 
     public void setTabSize(int tabSize){
         if (tabSize >= 1)
@@ -124,19 +166,90 @@ public class ZTerm extends Stage {
     }
 
 
-    public void addTextField(String defaultText, int widthInPixels){
+    public void addTextField(String defaultText, double widthInPixels){
         if (defaultText == null || defaultText.isBlank())
             defaultText = "null";
 
-        defaultText = defaultText.replaceAll("\\t", this.tab);
         TextField tf = new TextField(defaultText);
+        tf.setFont(this.ztFont);
+        tf.setPrefWidth(widthInPixels);
+        this.ztTextField.add(tf);
 
-        //return
+        //
+        this.drawingPane.add(tf, this.x += 5, this.y += 5);
+    }
+
+
+    public void addTextArea(String defaultText, double widthInPixels, double heightInPixels) {
+        if (defaultText == null) {
+            defaultText = "null";
+        }
+
+        TextArea textArea = new TextArea();
+        textArea.setPrefWidth(widthInPixels);
+        textArea.setPrefHeight(heightInPixels);
+        textArea.setText(defaultText);
+        this.ztTextArea.add(textArea);
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        this.drawingPane.getChildren().add(scrollPane);
+    }
+
+
+    public void setTextInFieldEntry(int textFieldIndex, String text) {
+        if (text == null)
+            text = "null";
+
+        this.ztTextField.get(textFieldIndex).setText(text);
+    }
+
+    public String getTextFromFieldEntry(int textFieldIndex) {
+        return this.ztTextField.get(textFieldIndex).getText();
+    }
+
+
+    public void setTextInAreaEntry(int textFieldIndex, String text) {
+        if (text == null)
+            text = "null";
+
+        this.ztTextArea.get(textFieldIndex).setText(text);
+    }
+
+
+    public String getTextFromAreaEntry(int textFieldIndex) {
+        return this.ztTextArea.get(textFieldIndex).getText();
     }
 
 
     public void clear(){
+        this.drawingPane = new GridPane();
+        this.mainScene = new Scene(this.drawingPane);
+        this.setScene(this.mainScene);
+    }
 
+
+    public void setFontName(String fontName) {
+        this.ztFontName = fontName;
+        this.ztFont = new Font(this.ztFontName, this.ztFontSize);
+    }
+
+
+    public void setBackgroundColor(Color backgroundColor) {
+        this.drawingPane.setBackground(new Background(new BackgroundFill(backgroundColor, new CornerRadii(0), Insets.EMPTY)));
+    }
+
+
+    public void setBackgroundColor(double r, double g, double b, double o) {
+        this.drawingPane.setBackground(new Background(new BackgroundFill(new Color(r, g, b, o), new CornerRadii(0), Insets.EMPTY)));
+    }
+
+
+    public void setFontColor(Color fontColor) {
+        this.ztFontColor = fontColor;
+    }
+
+
+    public void setFontColor(double r, double g, double b, double o) {
+        this.ztFontColor =  new Color(r, g, b, o);
     }
 
 
@@ -144,18 +257,12 @@ public class ZTerm extends Stage {
         if (message == null)
             message = "null";
 
-        //message = message.replaceAll("\\t", this.tab);
-        //String[] lines = message.split("\n");
-
-        Label newLabel = new Label(message);
-        newLabel.prefHeight(-1);
-        newLabel.prefWidth(-1);
-        System.out.println(newLabel.getWidth());
+        Text newText = new Text(message);
 
         if (true){
-            this.x += newLabel.getWidth();
-            this.y += newLabel.getHeight();
-            drawingPane.add(new Label(message), this.x , this.y);
+            this.x += message.length();
+            this.y += 2;
+            drawingPane.add(newText, this.x , this.y);
         } else {
 
         }
@@ -210,7 +317,7 @@ public class ZTerm extends Stage {
     }
 
 
-    public boolean showConfirmationDialog(String message) {
+    public boolean showConfirmInformationDialog(String message) {
         if (message == null)
             message = "null";
 
@@ -231,7 +338,6 @@ public class ZTerm extends Stage {
         inputDialog.setTitle("Input Dialog");
         inputDialog.setHeaderText(null);
         inputDialog.setContentText(message);
-
         Optional<String> input = inputDialog.showAndWait();
 
         return input.orElse("null");
@@ -271,21 +377,14 @@ public class ZTerm extends Stage {
         else {
             ImageView iv = new ImageView(i);
 
-            if (i.getHeight() > this.height)
-                iv.fitHeightProperty().setValue(i.getHeight() / 2);
-
-            if (i.getWidth() > this.width)
-                iv.fitWidthProperty().setValue(i.getWidth() / 2);
-
-            this.x += iv.getFitWidth();
-            this.y += iv.getFitHeight();
+            ScrollPane scrollPane = new ScrollPane();
             this.drawingPane.add(iv, this.x, this.y);
         }
     }
 
 
-    public void getMouseX() {
-
+    public double getMouseX() {
+        return this.mouseX;
     }
 
 }
