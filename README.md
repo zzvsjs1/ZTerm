@@ -23,13 +23,13 @@ A: Use this forum for all questions relating to zTerm
 
 
 
-# Klemens Chung
+Klemens Chung
 
 Hello,
 
 I was wondering if this command:" zt.addButton(); " to be explained how it works?
 
-# Zayan Zijesinghe
+Zayan Zijesinghe
 
 Hi Klemens,
 
